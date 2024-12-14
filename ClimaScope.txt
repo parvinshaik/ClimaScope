@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClimaScope</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f8ff;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.5s, color 0.5s;
+    }
+
+    .dark-mode {
+      background-color: #121212;
+      color: #f0f8ff;
+    }
+
+    header {
+      text-align: center;
+      background-color: #007bff;
+      color: white;
+      padding: 20px;
+      position: relative;
+      transition: background-color 0.5s;
+    }
+
+    .dark-mode header {
+      background-color: #333;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5em;
+    }
+
+    .toggle-icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      cursor: pointer;
+      font-size: 1.5em;
+      background: none;
+      border: none;
+      color: white;
+    }
+
+    .dark-mode .toggle-icon {
+      color: #f0f8ff;
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px;
+    }
+
+    .weather-details, .history {
+      background-color: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      padding: 20px;
+      width: 45%;
+      transition: background-color 0.5s, box-shadow 0.5s;
+    }
+
+    .dark-mode .weather-details,
+    .dark-mode .history {
+      background-color: #333;
+      box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+    }
+
+    .history h2, .weather-details h2 {
+      margin-top: 0;
+      font-size: 1.8em;
+    }
+
+    .history ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .history li {
+      background-color: #f9f9f9;
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dark-mode .history li {
+      background-color: #444;
+    }
+
+    .history button {
+      background-color: #ff4d4d;
+      border: none;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .history button:hover {
+      background-color: #e60000;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 80%;
+      margin: 10px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #007bff;
+      border: none;
+      color: white;
+      font-size: 1em;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .dark-mode button {
+      background-color: #444;
+      color: white;
+    }
+
+    .dark-mode button:hover {
+      background-color: #666;
+    }
+
+    .weather-details p {
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ClimaScope</h1>
+    <button class="toggle-icon" onclick="toggleDarkMode()">🌙</button>
+  </header>
+
+  <div class="container">
+    <!-- Left side: Weather Details -->
+    <div class="weather-details">
+      <h2>Weather Details</h2>
+      <input type="text" id="city" placeholder="Enter city">
+      <button onclick="getWeather()">Get Weather</button>
+      <div id="weatherResult">
+        <!-- Weather details will be displayed here -->
+      </div>
+    </div>
+
+    <!-- Right side: Search History -->
+    <div class="history">
+      <h2>Search History</h2>
+      <ul id="historyList">
+        <!-- Search history will be displayed here -->
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Initialize search history array
+    let searchHistory = [];
+     function toggleDarkMode() {
+      document.body.classList.toggle('dark-mode');
+    }
+    // Function to get weather
+    async function getWeather() {
+      const city = document.getElementById('city').value.trim();
+      const apiKey = 'f7d50971a7c1785f10cfa6b4fa83bbd8'; // Replace with your OpenWeatherMap API key
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.cod === 200) {
+          // Add city to search history
+          searchHistory.push(city);
+          updateHistoryList();
+          // Display weather details
+          document.getElementById('weatherResult').innerHTML = `
+            <h3>${data.name}</h3>
+            <p>Temperature: ${data.main.temp}°C</p>
+            <p>Weather: ${data.weather[0].description}</p>
+            <p>Humidity: ${data.main.humidity}%</p>
+            <p>Wind Speed: ${data.wind.speed} m/s</p>
+            <p>Precipitation: ${data.rain ? data.rain["1h"] : 'N/A'} mm</p>
+          `;
+        } else {
+          document.getElementById('weatherResult').innerHTML = '<p>City not found</p>';
+        }
+      } catch (error) {
+        document.getElementById('weatherResult').innerHTML = '<p>Error fetching data</p>';
+      }
+    }
+
+    // Update search history list
+    function updateHistoryList() {
+      const historyList = document.getElementById('historyList');
+      historyList.innerHTML = ''; // Clear previous list
+      searchHistory.forEach((city, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${city} <button onclick="removeHistory(${index})">Remove</button>`;
+        historyList.appendChild(li);
+      });
+    }
+
+    // Remove city from search history
+    function removeHistory(index) {
+      searchHistory.splice(index, 1);
+      updateHistoryList();
+    }
+  </script>
+
+</body>
+</html>
+
